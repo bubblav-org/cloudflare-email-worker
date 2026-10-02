@@ -19,7 +19,7 @@ npx wrangler secret put BUBBLAV_TOKEN
 ```
 
 Optionally override `BUBBLAV_ENDPOINT` (defaults to
-`https://app.bubblav.com/api/cloudflare-email/webhook`).
+`https://bubblav.com/api/cloudflare-email/webhook`).
 
 ## Routing
 
