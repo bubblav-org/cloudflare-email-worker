@@ -1,0 +1,13 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "bubblav-email-ingest",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-01",
+  "vars": {
+    "BUBBLAV_ENDPOINT": "https://app.bubblav.com/api/cloudflare-email/webhook",
+    // REQUIRED before deploy: your integration webhook_token (shown on the
+    // configure page). `wrangler secret put BUBBLAV_TOKEN` beats a plaintext
+    // var. The worker refuses mail while this is REPLACE_ME.
+    "BUBBLAV_TOKEN": "REPLACE_ME"
+  }
+}
