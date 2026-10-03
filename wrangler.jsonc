@@ -4,7 +4,9 @@
   "main": "src/index.ts",
   "compatibility_date": "2026-09-01",
   "vars": {
-    "BUBBLAV_ENDPOINT": "https://bubblav.com/api/cloudflare-email/webhook",
+    // IMPORTANT: use the www host — the apex 301-redirects to www, which turns
+    // this POST into a GET (405) and drops the mail.
+    "BUBBLAV_ENDPOINT": "https://www.bubblav.com/api/cloudflare-email/webhook",
     // REQUIRED before deploy: your integration webhook_token (shown on the
     // configure page). `wrangler secret put BUBBLAV_TOKEN` beats a plaintext
     // var. The worker refuses mail while this is REPLACE_ME.

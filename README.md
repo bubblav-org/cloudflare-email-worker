@@ -19,7 +19,9 @@ npx wrangler secret put BUBBLAV_TOKEN
 ```
 
 Optionally override `BUBBLAV_ENDPOINT` (defaults to
-`https://bubblav.com/api/cloudflare-email/webhook`).
+`https://www.bubblav.com/api/cloudflare-email/webhook`). Use the `www` host —
+`bubblav.com` apex 301-redirects to www and the redirect turns the POST into a
+GET, which the endpoint rejects with 405.
 
 ## Routing
 
