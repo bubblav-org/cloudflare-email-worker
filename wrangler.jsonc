@@ -3,13 +3,21 @@
   "name": "bubblav-email-ingest",
   "main": "src/index.ts",
   "compatibility_date": "2026-09-01",
+  // Email-only Worker (no fetch handler): it needs no public HTTP URL.
+  "workers_dev": false,
+  "preview_urls": false,
+  // BUBBLAV_TOKEN is a secret, never a var: it is your integration
+  // webhook_token (shown on the configure page). Set it with
+  // `npx wrangler secret put BUBBLAV_TOKEN`, or enter it in the Deploy to
+  // Cloudflare form (the form reads .dev.vars.example). The worker rejects
+  // mail while the token is not set.
   "vars": {
     // IMPORTANT: use the www host — the apex 301-redirects to www, which turns
     // this POST into a GET (405) and drops the mail.
-    "BUBBLAV_ENDPOINT": "https://www.bubblav.com/api/cloudflare-email/webhook",
-    // REQUIRED before deploy: your integration webhook_token (shown on the
-    // configure page). `wrangler secret put BUBBLAV_TOKEN` beats a plaintext
-    // var. The worker refuses mail while this is REPLACE_ME.
-    "BUBBLAV_TOKEN": "REPLACE_ME"
-  }
+    "BUBBLAV_ENDPOINT": "https://www.bubblav.com/api/cloudflare-email/webhook"
+  },
+  // Required by `wrangler preview` (Workers Builds PR previews); empty block —
+  // preview vars/secrets are configured via `wrangler preview secret put` or
+  // `previews.vars` when needed (they do not inherit top-level vars).
+  "previews": {}
 }

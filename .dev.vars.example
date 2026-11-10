@@ -1,0 +1,2 @@
+# Your BubblaV integration webhook_token (shown on the configure page). Secret: never commit a real value.
+BUBBLAV_TOKEN=

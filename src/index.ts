@@ -12,7 +12,17 @@
 
 interface Env {
   BUBBLAV_ENDPOINT: string;
-  BUBBLAV_TOKEN: string;
+  /** Worker secret. Undefined until `wrangler secret put BUBBLAV_TOKEN` (or the Deploy form) sets it. */
+  BUBBLAV_TOKEN?: string;
+}
+
+/**
+ * The configured token, or null when it is missing. `REPLACE_ME` is the old
+ * template placeholder: installs that still carry it count as not configured.
+ */
+function configuredToken(env: Env): string | null {
+  const token = env.BUBBLAV_TOKEN;
+  return token && token !== 'REPLACE_ME' ? token : null;
 }
 
 /** Minimal local shape of ForwardableEmailMessage (keeps the template dependency-free). */
@@ -31,19 +41,18 @@ interface ExportedHandler<E extends Env = Env> {
 
 export default {
   async email(message: ForwardableEmailMessage, env: Env, _ctx: unknown): Promise<void> {
-    // Never log secret VALUES — presence/length only.
-    const tokenSet = Boolean(env.BUBBLAV_TOKEN && env.BUBBLAV_TOKEN !== 'REPLACE_ME');
+    // Never log secret VALUES (presence/length only) or mail addresses (personal data).
+    const token = configuredToken(env);
     console.log(
-      `[ingest] to=${message.to} rawFrom=${message.from ?? '?'} ` +
-      `env: BUBBLAV_TOKEN=${tokenSet ? `set(${env.BUBBLAV_TOKEN.length})` : 'MISSING'} ` +
+      `[ingest] env: BUBBLAV_TOKEN=${token ? `set(${token.length})` : 'MISSING'} ` +
       `BUBBLAV_ENDPOINT=${env.BUBBLAV_ENDPOINT ?? 'MISSING'}`
     );
 
-    // A Deploy-button install that never overrode the template token would
-    // otherwise get 401 → setReject forever. Reject loudly instead.
-    if (!tokenSet) {
+    // Without a token every POST gets 401 → setReject. Reject loudly before
+    // the POST instead, with the fix in the reason.
+    if (!token) {
       console.error('[ingest] BUBBLAV_TOKEN missing — rejecting before POST');
-      message.setReject('BUBBLAV_TOKEN not configured — set it via wrangler secret put or wrangler.jsonc vars');
+      message.setReject('BUBBLAV_TOKEN not configured: set it with wrangler secret put BUBBLAV_TOKEN');
       return;
     }
     if (!env.BUBBLAV_ENDPOINT) {
@@ -57,13 +66,11 @@ export default {
     const raw = await new Response(message.raw).arrayBuffer();
     console.log(`[ingest] buffered ${raw.byteLength} bytes`);
 
-    // Auth: BubblaV accepts `?t=<token>` + a matching `Authorization: Bearer`
-    // header (same token, dual transport). If the endpoint already carries a
-    // query string, pass it through untouched.
-    const url = env.BUBBLAV_ENDPOINT.includes('?')
-      ? env.BUBBLAV_ENDPOINT
-      : `${env.BUBBLAV_ENDPOINT}?t=${env.BUBBLAV_TOKEN}`;
-    console.log(`[ingest] POST ${env.BUBBLAV_ENDPOINT}`);
+    // Auth: `Authorization: Bearer <token>` only. The token is never put in the
+    // URL: on the BubblaV platform deployment it is the shared inbound secret,
+    // and URLs end up in request logs.
+    const url = env.BUBBLAV_ENDPOINT;
+    console.log(`[ingest] POST ${url}`);
 
     let res: Response;
     try {
@@ -71,7 +78,7 @@ export default {
         method: 'POST',
         headers: {
           'content-type': 'message/rfc822',
-          'authorization': `Bearer ${env.BUBBLAV_TOKEN}`,
+          'authorization': `Bearer ${token}`,
           'x-cf-envelope-to': message.to,
         },
         body: raw,
